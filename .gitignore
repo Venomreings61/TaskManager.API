@@ -1,0 +1,16 @@
+# Build output
+bin/
+obj/
+
+# IDE files
+.vs/
+*.user
+
+# Secrets - check appsettings.json first!
+appsettings.Development.json
+appsettings.Production.json
+
+# Logs
+*.log
+
+.env
