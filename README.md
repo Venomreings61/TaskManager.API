@@ -102,6 +102,23 @@ http://localhost:5001/swagger
 
 localhost:5001
 
+# 📋 TaskManager API
+
+![Docker Pulls](https://img.shields.io/docker/pulls/megalodon61/taskmanager-api)
+![Docker Image Size](https://img.shields.io/docker/image-size/megalodon61/taskmanager-api/latest)
+[![Docker Hub](https://img.shields.io/badge/Docker%20Hub-megalodon61%2Ftaskmanager--api-blue?logo=docker)](https://hub.docker.com/r/megalodon61/taskmanager-api)
+
+
+## 🐳 Run Directly from Docker Hub (No Clone Needed!)
+
+```bash
+docker pull megalodon61/taskmanager-api:v1
+docker run -d -p 5000:8080 \
+  -e ConnectionStrings__DefaultConnection="Host=your-db-host;Database=TaskManagerDb;Username=postgres;Password=yourpassword" \
+  -e JWT__Secret="your-secret-key" \
+  megalodon61/taskmanager-api:v1
+```
+
 ## 🧪 Run Locally (without Docker)
 
 ```bash
