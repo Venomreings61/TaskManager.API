@@ -13,6 +13,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration
             .GetConnectionString("DefaultConnection")));
+// Health checks
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration
+        .GetConnectionString("DefaultConnection")!,
+        name: "postgresql");
 
 // Services
 builder.Services.AddScoped<AuthService>();
@@ -90,5 +95,6 @@ app.UseSwaggerUI();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();

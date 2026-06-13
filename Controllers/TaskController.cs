@@ -23,11 +23,17 @@ namespace TaskManager.API.Controllers
                 ClaimTypes.NameIdentifier)!.Value);
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll(
+            [FromQuery] bool? isCompleted,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
         {
-            var tasks = await _taskService
-                .GetAllAsync(GetUserId());
-            return Ok(tasks);
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 100) pageSize = 10;
+
+            var result = await _taskService
+                .GetAllAsync(GetUserId(), isCompleted, page, pageSize);
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
@@ -42,6 +48,8 @@ namespace TaskManager.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(CreateTaskDTO dto)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
             var task = await _taskService
                 .CreateAsync(dto, GetUserId());
             return CreatedAtAction(
@@ -53,6 +61,8 @@ namespace TaskManager.API.Controllers
         public async Task<IActionResult> Update(
             int id, UpdateTaskDTO dto)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
             var task = await _taskService
                 .UpdateAsync(id, dto, GetUserId());
             if (task == null) return NotFound();

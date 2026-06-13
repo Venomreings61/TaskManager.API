@@ -14,20 +14,33 @@ namespace TaskManager.API.Services
             _context = context;
         }
 
-        public async Task<List<TaskResponseDTO>> GetAllAsync(int userId)
+        public async Task<PagedResponseDTO<TaskResponseDTO>> GetAllAsync(
+            int userId, bool? isCompleted, int page, int pageSize)
         {
-            return await _context.Tasks
-                .Where(t => t.UserId == userId)
-                .Select(t => new TaskResponseDTO
-                {
-                    Id = t.Id,
-                    Title = t.Title,
-                    Description = t.Description,
-                    IsCompleted = t.IsCompleted,
-                    CreatedAt = t.CreatedAt,
-                    CompletedAt = t.CompletedAt
-                })
+            var query = _context.Tasks.Where(t => t.UserId == userId);
+
+            // Filtering
+            if (isCompleted.HasValue)
+                query = query.Where(t => t.IsCompleted == isCompleted.Value);
+
+            var totalCount = await query.CountAsync();
+
+            // Pagination
+            var items = await query
+                .OrderByDescending(t => t.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(t => MapToDto(t))
                 .ToListAsync();
+
+            return new PagedResponseDTO<TaskResponseDTO>
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
         }
 
         public async Task<TaskResponseDTO?> GetByIdAsync(int id, int userId)
@@ -35,17 +48,7 @@ namespace TaskManager.API.Services
             var task = await _context.Tasks
                 .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
 
-            if (task == null) return null;
-
-            return new TaskResponseDTO
-            {
-                Id = task.Id,
-                Title = task.Title,
-                Description = task.Description,
-                IsCompleted = task.IsCompleted,
-                CreatedAt = task.CreatedAt,
-                CompletedAt = task.CompletedAt
-            };
+            return task == null ? null : MapToDto(task);
         }
 
         public async Task<TaskResponseDTO> CreateAsync(
@@ -55,20 +58,14 @@ namespace TaskManager.API.Services
             {
                 Title = dto.Title,
                 Description = dto.Description,
+                Priority = dto.Priority,
                 UserId = userId
             };
 
             _context.Tasks.Add(task);
             await _context.SaveChangesAsync();
 
-            return new TaskResponseDTO
-            {
-                Id = task.Id,
-                Title = task.Title,
-                Description = task.Description,
-                IsCompleted = task.IsCompleted,
-                CreatedAt = task.CreatedAt
-            };
+            return MapToDto(task);
         }
 
         public async Task<TaskResponseDTO?> UpdateAsync(
@@ -82,19 +79,12 @@ namespace TaskManager.API.Services
             task.Title = dto.Title;
             task.Description = dto.Description;
             task.IsCompleted = dto.IsCompleted;
+            task.Priority = dto.Priority;
             task.CompletedAt = dto.IsCompleted ? DateTime.UtcNow : null;
 
             await _context.SaveChangesAsync();
 
-            return new TaskResponseDTO
-            {
-                Id = task.Id,
-                Title = task.Title,
-                Description = task.Description,
-                IsCompleted = task.IsCompleted,
-                CreatedAt = task.CreatedAt,
-                CompletedAt = task.CompletedAt
-            };
+            return MapToDto(task);
         }
 
         public async Task<bool> DeleteAsync(int id, int userId)
@@ -108,5 +98,16 @@ namespace TaskManager.API.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+        private static TaskResponseDTO MapToDto(TaskItem t) => new()
+        {
+            Id = t.Id,
+            Title = t.Title,
+            Description = t.Description,
+            IsCompleted = t.IsCompleted,
+            Priority = t.Priority,
+            CreatedAt = t.CreatedAt,
+            CompletedAt = t.CompletedAt
+        };
     }
 }
