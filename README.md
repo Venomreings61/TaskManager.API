@@ -12,6 +12,10 @@ featuring JWT authentication, PostgreSQL, and full Docker support.
 - **Auto Migrations** - Database schema applies automatically on startup
 - **Swagger UI** - Interactive API documentation with JWT support
 - **Dockerized** - Multi-stage build, docker-compose with healthchecks
+- **Input Validation** - Data annotations with clear error messages
+- **Pagination & Filtering** - Efficient task list queries
+- **Priority Levels** - Low/Medium/High task prioritization
+- **Health Checks** - `/health` endpoint verifies DB connectivity
 
 ## 🛠️ Tech Stack
 
@@ -66,12 +70,58 @@ http://localhost:5001/swagger
 |---|---|---|---|
 | POST | `/api/auth/register` | No | Create new account |
 | POST | `/api/auth/login` | No | Login and get JWT token |
-| GET | `/api/task` | Yes | Get all your tasks |
+| GET | `/api/task` | Yes | Get tasks (paginated + filterable) |
 | GET | `/api/task/{id}` | Yes | Get a specific task |
 | POST | `/api/task` | Yes | Create a new task |
 | PUT | `/api/task/{id}` | Yes | Update a task |
 | DELETE | `/api/task/{id}` | Yes | Delete a task |
+| GET | `/health` | No | Health check (DB connectivity) |
 
+### Query Parameters for GET /api/task
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `page` | int | 1 | Page number |
+| `pageSize` | int | 10 (max 100) | Items per page |
+| `isCompleted` | bool | - | Filter by completion status |
+
+**Example:** `GET /api/task?isCompleted=false&page=1&pageSize=5`
+
+```json
+{
+  "items": [
+    {
+      "id": 2,
+      "title": "Learn Docker",
+      "description": "Complete Phase 3",
+      "isCompleted": false,
+      "priority": 2,
+      "createdAt": "2026-06-13T09:30:01Z",
+      "completedAt": null
+    }
+  ],
+  "page": 1,
+  "pageSize": 5,
+  "totalCount": 1,
+  "totalPages": 1
+}
+```
+
+### Task Priority Values
+| Value | Meaning |
+|---|---|
+| 0 | Low |
+| 1 | Medium |
+| 2 | High |
+
+## ✅ Input Validation
+
+| Field | Rules |
+|---|---|
+| Username | Required, min 3 characters |
+| Email | Required, valid email format |
+| Password | Required, min 6 characters |
+| Task Title | Required, max 200 characters |
+| Task Description | Max 1000 characters |
 ## 🔐 Authentication Flow
 
 1. Register: `POST /api/auth/register`
